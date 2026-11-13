@@ -6,12 +6,15 @@ import {
   ArrowRight, BookOpen, Command, Compass, FileCheck2, LayoutDashboard, LogOut,
   Menu, Search, Shield, X,
 } from 'lucide-react'
+// The hero and the dashboard are the first two screens a visitor sees, so
+// they ride along in the initial bundle instead of costing a round trip
+// each. Everything heavier stays lazy.
+import DotGlobeHeroDemo from './components/ui/demo'
+import Dashboard from './pages/Dashboard'
 
 export { ROLE_RANK } from './api'
 
-const DotGlobeHeroDemo = lazy(() => import('./components/ui/demo'))
 const Login = lazy(() => import('./pages/Login'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Review = lazy(() => import('./pages/Review'))
 const KB = lazy(() => import('./pages/KB'))
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'))
