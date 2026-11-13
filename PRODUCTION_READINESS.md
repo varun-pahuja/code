@@ -18,6 +18,9 @@ and the exact environment checklist for deployment.
 | Frontend lint | `cd frontend && pnpm lint` | **0 errors, 0 warnings** |
 | Bundle | build output | entry **53.78 kB / 15.58 kB gzip**; vendor-react 212.6 kB, vendor-chart 199.2 kB (both lazy) |
 | Live backend | `GET https://branguard-ai-sg.onrender.com/health` | 200, provider `groq`, HSTS + Permissions-Policy + X-Request-ID present |
+| Live LCP (median of 3 cold loads) | hero / dashboard / review / review detail / KB | **1544 / 1356 / 1936 / 1776 / 1872 ms** (all < 2.5 s) |
+| Live CLS | hero + dashboard | **0.003** (was 0.473) |
+| A11y | axe-core 4.10.2, both screens | **0 violations** |
 
 ---
 
