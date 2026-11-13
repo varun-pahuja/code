@@ -134,7 +134,19 @@ export const msg = (e: unknown): string =>
   e instanceof Error ? e.message : String(e)
 
 let refreshInFlight: Promise<boolean> | null = null
-const inFlightGet = new Map<string, Promise<unknown>>()
+
+// GET responses are cached for a few seconds so navigating between screens
+// doesn't refetch. Any mutation clears the whole cache, so a screen always
+// shows fresh data after an action.
+const GET_CACHE = new Map<string, { t: number; p: Promise<unknown> }>()
+const GET_TTL_MS = 15_000
+
+/** Start a GET before the component mounts (see main.tsx warm-up). */
+export function prefetch(path: string): void {
+  if (GET_CACHE.has(path)) return
+  if (!loadAuth()) return
+  api(path).catch(() => { /* prefetch is best-effort */ })
+}
 
 async function tryRefresh(): Promise<boolean> {
   if (!refreshInFlight) {
@@ -167,8 +179,9 @@ export async function api<T = unknown>(
   opts: { method?: string; body?: unknown; retry?: boolean; noDedupe?: boolean } = {},
 ): Promise<T> {
   const method = opts.method ?? (opts.body !== undefined ? 'POST' : 'GET')
-  if (method === 'GET' && !opts.noDedupe && inFlightGet.has(path)) {
-    return inFlightGet.get(path) as Promise<T>
+  if (method === 'GET' && !opts.noDedupe) {
+    const hit = GET_CACHE.get(path)
+    if (hit && Date.now() - hit.t < GET_TTL_MS) return hit.p as Promise<T>
   }
 
   const reqPromise = (async () => {
@@ -200,9 +213,14 @@ export async function api<T = unknown>(
     return r.json() as Promise<T>
   })()
 
-  if (method === 'GET' && !opts.noDedupe) {
-    inFlightGet.set(path, reqPromise)
-    reqPromise.finally(() => inFlightGet.delete(path))
+  if (method === 'GET') {
+    if (!opts.noDedupe) {
+      GET_CACHE.set(path, { t: Date.now(), p: reqPromise })
+      reqPromise.catch(() => GET_CACHE.delete(path))
+    }
+  } else {
+    // a mutation invalidates every read, so a screen never shows stale data
+    GET_CACHE.clear()
   }
 
   return reqPromise

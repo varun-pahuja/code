@@ -125,27 +125,40 @@ function PersonalDashboard({ user }: { user: User }) {
       </div>
     )
   }
-  if (!rows) return <Loading label="Loading your workspace" />
+  const header = (
+    <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+      <div>
+        <span className="eyebrow">{user.role} workspace</span>
+        <h1 className="font-serif text-3xl sm:text-4xl tracking-tight mt-1">
+          {user.role === 'creator' ? 'Your submissions' : 'Review queue'}
+        </h1>
+        <p className="text-sm text-muted mt-1">
+          {user.role === 'creator'
+            ? 'Track every draft and its review status.'
+            : 'Content awaiting your review and its current status.'}
+        </p>
+      </div>
+      <a href="#/review" className="btn btn-ghost self-start sm:self-auto">
+        <FileText className="w-4 h-4" />
+        {user.role === 'creator' ? 'New submission' : 'Open queue'}
+      </a>
+    </header>
+  )
+
+  // The header paints immediately — only the data waits for the API, so the
+  // largest element on screen isn't blocked by the round-trip.
+  if (!rows) {
+    return (
+      <div className="space-y-6">
+        {header}
+        <Loading label="Loading your workspace" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <span className="eyebrow">{user.role} workspace</span>
-          <h1 className="font-serif text-3xl sm:text-4xl tracking-tight mt-1">
-            {user.role === 'creator' ? 'Your submissions' : 'Review queue'}
-          </h1>
-          <p className="text-sm text-muted mt-1">
-            {user.role === 'creator'
-              ? 'Track every draft and its review status.'
-              : 'Content awaiting your review and its current status.'}
-          </p>
-        </div>
-        <a href="#/review" className="btn btn-ghost self-start sm:self-auto">
-          <FileText className="w-4 h-4" />
-          {user.role === 'creator' ? 'New submission' : 'Open queue'}
-        </a>
-      </header>
+      {header}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Kpi label="Submissions" value={String(mine.length)} sub="In your scope"
@@ -245,7 +258,48 @@ function ManagerDashboard() {
       </div>
     )
   }
-  if (!d) return <Loading label="Loading compliance analytics" />
+  const header = (
+    <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+      <div>
+        <span className="eyebrow">Portfolio</span>
+        <h1 className="font-serif text-3xl sm:text-4xl tracking-tight mt-1">
+          Compliance dashboard
+        </h1>
+        <p className="text-sm text-muted mt-1">
+          Copy compliance, AI audit logs and SLA monitors across every team.
+        </p>
+      </div>
+      <div className="flex items-center gap-2 self-start sm:self-auto">
+        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md
+          bg-surface-2 border border-hairline text-xs text-muted">
+          <span className="w-2 h-2 rounded-full bg-sage" />
+          Live
+        </span>
+        <div className="seg inline-flex border border-hairline-strong rounded-md overflow-hidden">
+          {([7, 30, 90] as const).map((n) => (
+            <button key={n} onClick={() => setDays(n)}
+                    className={`px-2.5 py-1.5 text-[11px] font-mono cursor-pointer transition-colors ${
+                      days === n
+                        ? 'bg-accent/15 text-accent'
+                        : 'text-muted hover:text-ink hover:bg-surface-2'
+                    }`}>
+              {n}d
+            </button>
+          ))}
+        </div>
+      </div>
+    </header>
+  )
+
+  // Header paints immediately; only the analytics wait for the API.
+  if (!d) {
+    return (
+      <div className="space-y-6">
+        {header}
+        <Loading label="Loading compliance analytics" />
+      </div>
+    )
+  }
 
   const heatMax = Math.max(...d.heat_map.map((h) => h.count), 1)
   const ruleMax = d.most_violated_rules[0]?.count ?? 1
@@ -254,36 +308,7 @@ function ManagerDashboard() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <span className="eyebrow">Portfolio</span>
-          <h1 className="font-serif text-3xl sm:text-4xl tracking-tight mt-1">
-            Compliance dashboard
-          </h1>
-          <p className="text-sm text-muted mt-1">
-            Copy compliance, AI audit logs and SLA monitors across every team.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md
-            bg-surface-2 border border-hairline text-xs text-muted">
-            <span className="w-2 h-2 rounded-full bg-sage" />
-            Live
-          </span>
-          <div className="seg inline-flex border border-hairline-strong rounded-md overflow-hidden">
-            {([7, 30, 90] as const).map((n) => (
-              <button key={n} onClick={() => setDays(n)}
-                      className={`px-2.5 py-1.5 text-[11px] font-mono cursor-pointer transition-colors ${
-                        days === n
-                          ? 'bg-accent/15 text-accent'
-                          : 'text-muted hover:text-ink hover:bg-surface-2'
-                      }`}>
-                {n}d
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
+      {header}
 
       <div data-tour="kpi-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Kpi label="Compliance rate" value={`${d.compliance_rate}%`}
