@@ -27,6 +27,20 @@ function warmRoute(): void {
 
 warmRoute()
 
+// Warm the next screens' code once the browser is idle: clicking into the
+// review queue or the knowledge base then doesn't wait for a chunk download.
+const idle = (fn: () => void) => {
+  const w = window as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+  }
+  if (w.requestIdleCallback) w.requestIdleCallback(fn, { timeout: 3000 })
+  else window.setTimeout(fn, 2500)
+}
+idle(() => {
+  void import('./pages/Review')
+  void import('./pages/KB')
+})
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
